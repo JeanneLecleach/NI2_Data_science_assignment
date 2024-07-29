@@ -1,1 +1,78 @@
+library(shiny)
+data(airquality)
 
+# Define UI for app that draws a histogram ----
+ui <- fluidPage(
+  
+  # App title ----
+  titlePanel("Air Temperature Level"),
+  
+  # Sidebar layout with input and output definitions ----
+  sidebarLayout(
+    
+    # Sidebar panel for inputs ----
+    sidebarPanel(
+      
+      # Input: Slider for the number of bins ----
+      sliderInput(inputId = "bins",
+                  label = "Number of bins:",
+                  min = 1,
+                  max = 40,
+                  value = 30),
+      
+      # Input: Select for choosing a month ----
+      selectInput(
+        inputId = "month",
+        label = "Choose a month:",
+        choices = c("May", "June", "July", "August", "September")
+      ),
+      
+      # Input: Slider for temperature range ----
+      sliderInput(inputId = "tempRange",
+                  label = "Temperature Range:",
+                  min = 50,
+                  max = 100,
+                  value = c(60, 90))
+      
+    ),
+    
+    # Main panel for displaying outputs ----
+    mainPanel(
+      
+      # Output: Histogram ----
+      plotOutput(outputId = "distPlot")
+      
+    )
+  )
+)
+
+# Define server logic required to draw a histogram ----
+server <- function(input, output) {
+  
+  output$distPlot <- renderPlot({
+    
+    # Filter the data based on the selected month and temperature range
+    month_data <- switch(input$month,
+                         "May" = airquality[airquality$Month == 5, ],
+                         "June" = airquality[airquality$Month == 6, ],
+                         "July" = airquality[airquality$Month == 7, ],
+                         "August" = airquality[airquality$Month == 8, ],
+                         "September" = airquality[airquality$Month == 9, ])
+    
+    temp_data <- subset(month_data, Temp >= input$tempRange[1] & Temp <= input$tempRange[2])
+    
+    x <- temp_data$Temp
+    x <- na.omit(x)
+    
+    bins <- seq(min(x), max(x), length.out = input$bins + 1)
+    
+    hist(x, breaks = bins, col = "#c297a2", border = "white",
+         xlab = "Air Temperature (F°)",
+         main = paste("Histogram of Air Temperature in", input$month))
+    
+  })
+  
+}
+
+# Create Shiny app ----
+shinyApp(ui = ui, server = server)
